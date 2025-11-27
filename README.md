@@ -18,6 +18,8 @@ I think you could easily adjust it to any other framework, iOS and Android relea
 
 ---
 
+<img width="832" height="900" alt="image" src="https://github.com/user-attachments/assets/9e74747b-5fb1-48f9-984b-123b94db2187" />
+
 ## Features
 
 - **Universal version bumping** - Works with any Flutter project structure
