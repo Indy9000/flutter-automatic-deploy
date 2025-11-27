@@ -1,239 +1,128 @@
-# Flutter Automatic Deploy
+# App Store Connect Automation (Dart)
 
-Automate version bumping, changelog generation, and App Store/Play Store releases for Flutter projects.
+Automates release notes and review submission after IPA upload to App Store Connect.
 
-Disclaimer:
-Guys, mind this is a project adjusted specifically to my needs. You should hook up your LLM and ask him to adjust so it works for you. For example, I'm using easy_localization and the pre-check is designed for this package specifically. 
+**Built by Filip Kowalski**  
+X: [@filippkowalski](https://twitter.com/filippkowalski)  
+Website: [fkowalski.com](https://fkowalski.com)  
+Support: [buymeacoffee.com/filipkowalski](https://buymeacoffee.com/filipkowalski)
 
-Once you provide it with API Key from the App Store (App Manager permission), it will automatically build, push, and submit the app for review for you.
+## Setup
 
-PR's or improvement ideas welcome. 
-
-I think you could easily adjust it to any other framework, iOS and Android release are universal so that should be an easy switch.
-
-**Built by Filip Kowalski**
-- X: [@filippkowalski](https://x.com/filippkowalski)
-- Website: [fkowalski.com](https://fkowalski.com)
-- Support: [Buy me a coffee](https://buymeacoffee.com/filipkowalski)
-
----
-
-<img width="832" height="900" alt="image" src="https://github.com/user-attachments/assets/9e74747b-5fb1-48f9-984b-123b94db2187" />
-
-## Features
-
-- **Universal version bumping** - Works with any Flutter project structure
-- **Auto-changelog generation** - Generates changelog from git commits using conventional commits
-- **iOS automation** - Build IPA, upload to App Store Connect, and auto-submit for review
-- **Android automation** - Build App Bundle and open release folder
-- **Pre-release validation** - Validates JSON files, translation coverage, and runs Flutter analyze
-- **Git integration** - Auto-commit, create tags, and push to remote
-
-## Quick Start
-
-### 1. Clone or download the scripts
+### 1. Install Dependencies
 
 ```bash
-git clone https://github.com/filippkowalski/flutter-automatic-deploy.git
-cd flutter-automatic-deploy
-chmod +x bump_version.sh submit_to_app_store.py
+dart pub get
 ```
 
-### 2. Install globally (optional)
-
-Add an alias to your shell config (`~/.zshrc` or `~/.bashrc`):
-
-```bash
-alias bump_version='/path/to/flutter-automatic-deploy/bump_version.sh'
-```
-
-Then reload your shell:
-```bash
-source ~/.zshrc
-```
-
-### 3. Set up environment variables (for iOS releases)
+### 2. Set Environment Variables
 
 ```bash
 export APP_STORE_API_KEY_ID=your_key_id
 export APP_STORE_ISSUER_ID=your_issuer_id
-export APP_STORE_P8_KEY_PATH=~/.appstoreconnect/private_keys/AuthKey_YOUR_KEY_ID.p8
+export APP_STORE_P8_KEY_PATH=/path/to/AuthKey.p8  # optional
 ```
 
-You can find your API credentials in [App Store Connect > Users and Access > Keys](https://appstoreconnect.apple.com/access/api).
+You can find these values in **App Store Connect > Users and Access > Keys**.
 
-### 4. Install Python dependencies (for App Store submission)
-
-```bash
-pip3 install PyJWT requests cryptography
-```
+Default P8 key path: `~/.appstoreconnect/private_keys/AuthKey_{KEY_ID}.p8`
 
 ## Usage
 
-### Basic Version Bumping
+### Basic Usage
 
 ```bash
-# Bump patch version (1.0.0 -> 1.0.1)
-bump_version patch
-
-# Bump minor version (1.0.0 -> 1.1.0)
-bump_version minor
-
-# Bump major version (1.0.0 -> 2.0.0)
-bump_version major
-
-# Bump build number only (1.0.0+10 -> 1.0.0+11)
-bump_version build
-
-# Set specific version
-bump_version 1.14.0+31
+dart submit_to_app_store.dart 1.13.0
 ```
 
-### Full Release (Build + Upload + Submit)
+### With Build Number
 
 ```bash
-# Full release for both platforms
-bump_version patch --release
-
-# iOS only
-bump_version patch --release --skip-android
-
-# Android only
-bump_version patch --release --skip-ios
-
-# Upload without auto-submitting to App Store review
-bump_version patch --release --skip-submit
+dart submit_to_app_store.dart 1.13.0+30
 ```
 
-### Git Integration
+### Custom Project Path
 
 ```bash
-# Auto-commit version changes
-bump_version patch --commit
-
-# Create and push git tag
-bump_version patch --push-tag
-
-# Full release with tag push
-bump_version patch --release --push-tag
+dart submit_to_app_store.dart 1.13.0 --project-path /path/to/project
 ```
 
-### Preview Mode
+### Dry Run (Preview Only)
 
 ```bash
-# See what would happen without making changes
-bump_version patch --dry-run
+dart submit_to_app_store.dart 1.13.0 --dry-run
 ```
 
-## Options
-
-| Option | Description |
-|--------|-------------|
-| `major` | Bump major version (1.0.0 -> 2.0.0) |
-| `minor` | Bump minor version (1.0.0 -> 1.1.0) |
-| `patch` | Bump patch version (1.0.0 -> 1.0.1) |
-| `build` | Bump build number only |
-| `X.Y.Z+B` | Set specific version |
-| `--release` | Build and upload after version bump |
-| `--skip-ios` | Skip iOS build |
-| `--skip-android` | Skip Android build |
-| `--skip-submit` | Upload iOS without auto-submission |
-| `--commit` | Auto-commit version changes |
-| `--push-tag` | Create and push git tag |
-| `--no-tag` | Skip git tag creation |
-| `--dry-run` | Preview changes without modifying files |
-| `--help` | Show help message |
-
-## Environment Variables
-
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `APP_STORE_API_KEY_ID` | For iOS | App Store Connect API Key ID |
-| `APP_STORE_ISSUER_ID` | For iOS | App Store Connect Issuer ID |
-| `APP_STORE_P8_KEY_PATH` | Optional | Path to .p8 key file (defaults to `~/.appstoreconnect/private_keys/AuthKey_{KEY_ID}.p8`) |
-
-## Project Structure Support
-
-The script auto-detects Flutter projects in common structures:
-
-```
-project/                  # Works from here
-project/mobile/           # Works from here (looks for mobile/pubspec.yaml)
-project/app/              # Works from here (looks for app/pubspec.yaml)
-project/flutter/          # Works from here
-```
-
-## Changelog Generation
-
-The script automatically generates changelog entries from git commits using [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` commits go under **Added**
-- `fix:` commits go under **Fixed**
-- `refactor:`, `perf:`, `style:`, `chore:` go under **Changed**
-
-Example generated changelog:
-
-```markdown
-## [1.14.0+32] - 2024-01-15
-
-### Added
-- New user authentication flow
-- Dark mode support
-
-### Fixed
-- Login button not responding on iOS
-- Memory leak in image cache
-
-### Changed
-- Improved performance of list rendering
-```
-
-## Pre-Release Validation
-
-Before releasing, the script validates:
-
-1. **JSON translation files** - Syntax validation
-2. **Translation coverage** - Checks all languages have the same keys (if `translation_checker.py` is present)
-3. **Flutter analyze** - Runs `flutter analyze` and blocks on errors
-
-## App Store Submission Script
-
-The `submit_to_app_store.py` script can also be used standalone:
+### Override Bundle ID
 
 ```bash
-# Submit a specific version
-./submit_to_app_store.py 1.13.0
-
-# With project path
-./submit_to_app_store.py 1.13.0 --project-path /path/to/project
-
-# Preview mode
-./submit_to_app_store.py 1.13.0 --dry-run
-
-# Override bundle ID
-./submit_to_app_store.py 1.13.0 --bundle-id com.example.app
+dart submit_to_app_store.dart 1.13.0 --bundle-id com.example.app
 ```
 
-## Setting Up App Store Connect API
+## What It Does
 
-1. Go to [App Store Connect > Users and Access > Keys](https://appstoreconnect.apple.com/access/api)
-2. Click the **+** button to create a new API key
-3. Give it a name and select **Admin** or **App Manager** role
-4. Download the .p8 file (you can only download it once!)
-5. Note the **Key ID** and **Issuer ID**
-6. Place the .p8 file at `~/.appstoreconnect/private_keys/AuthKey_YOUR_KEY_ID.p8`
-7. Set the environment variables:
+1. **Detects Bundle ID** - Auto-detects from your Xcode project
+2. **Finds Your App** - Locates the app in App Store Connect
+3. **Waits for Build** - Waits for the uploaded build to finish processing
+4. **Creates/Updates Version** - Gets existing or creates new version
+5. **Links Build** - Associates the build with the version
+6. **Adds Release Notes** - Adds notes to all localizations
+7. **Submits for Review** - Submits the version for App Store review
+
+## Release Notes
+
+Default release notes: "Bug fixes and improvements."
+
+To customize, edit the `releaseNotes` constant in `submit_to_app_store.dart`.
+
+## Making It Executable
 
 ```bash
-# Add to ~/.zshrc or ~/.bashrc
-export APP_STORE_API_KEY_ID=YOUR_KEY_ID
-export APP_STORE_ISSUER_ID=YOUR_ISSUER_ID
+chmod +x submit_to_app_store.dart
+./submit_to_app_store.dart 1.13.0
 ```
+
+## Workflow Integration
+
+Typical workflow:
+
+1. Build and upload IPA:
+   ```bash
+   flutter build ipa
+   xcrun altool --upload-app -f build/ios/ipa/*.ipa \
+     --type ios \
+     --apiKey $APP_STORE_API_KEY_ID \
+     --apiIssuer $APP_STORE_ISSUER_ID
+   ```
+
+2. Run this script:
+   ```bash
+   dart submit_to_app_store.dart 1.13.0+30
+   ```
+
+## Key Differences from Python Version
+
+- Uses `jose` package for JWT token generation (ES256 signing)
+- Native Dart async/await instead of blocking calls
+- Strong typing with Dart's type system
+- Uses `args` package for command-line argument parsing
+- Uses `http` package for HTTP requests
+
+## Troubleshooting
+
+### "Missing dependencies"
+Run `dart pub get`
+
+### "P8 key file not found"
+Set `APP_STORE_P8_KEY_PATH` or place the key at: `~/.appstoreconnect/private_keys/AuthKey_{KEY_ID}.p8`
+
+### "App not found"
+Verify the bundle ID matches your app in App Store Connect
+
+### "Build not found"
+Make sure you uploaded the IPA first using `xcrun altool`
 
 ## License
 
-MIT License - feel free to use in your projects!
+This is a conversion of the original Python script to Dart, maintaining the same functionality and workflow.
 
----
-
-**If this tool saved you time, consider [buying me a coffee](https://buymeacoffee.com/filipkowalski)!**
